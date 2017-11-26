@@ -1,0 +1,58 @@
+--- Makefile.orig	2017-11-26 12:54:55.301997370 +0800
++++ Makefile	2017-11-26 12:44:27.000000000 +0800
+@@ -32,8 +32,7 @@
+ ifdef EMBED
+ 	MYSQL_LIBS = $(shell $(MYSQL_CONFIG) --libmysqld-libs)
+ else
+-	MYSQL_LIBS = $(shell $(MYSQL_CONFIG) --libs_r) \
+-		$(LDRFLAG)$(shell $(MYSQL_CONFIG) --libs_r | sed -r -e 's/-L([^ ]+).*/\1/')
++	MYSQL_LIBS = $(shell $(MYSQL_CONFIG) --libs_r)
+ endif
+ 
+ 
+--- nsdbimy.c.orig	2017-11-26 12:54:41.101991561 +0800
++++ nsdbimy.c	2017-11-26 12:59:04.946140795 +0800
+@@ -114,20 +114,20 @@
+  */
+ 
+ static Dbi_DriverProc procs[] = {
+-    {Dbi_OpenProcId,         Open},
+-    {Dbi_CloseProcId,        Close},
+-    {Dbi_ConnectedProcId,    Connected},
+-    {Dbi_BindVarProcId,      Bind},
+-    {Dbi_PrepareProcId,      Prepare},
+-    {Dbi_PrepareCloseProcId, PrepareClose},
+-    {Dbi_ExecProcId,         Exec},
+-    {Dbi_NextRowProcId,      NextRow},
+-    {Dbi_ColumnLengthProcId, ColumnLength},
+-    {Dbi_ColumnValueProcId,  ColumnValue},
+-    {Dbi_ColumnNameProcId,   ColumnName},
+-    {Dbi_TransactionProcId,  Transaction},
+-    {Dbi_FlushProcId,        Flush},
+-    {Dbi_ResetProcId,        Reset},
++    {Dbi_OpenProcId,         (Ns_Callback *) Open},
++    {Dbi_CloseProcId,        (Ns_Callback *) Close},
++    {Dbi_ConnectedProcId,    (Ns_Callback *) Connected},
++    {Dbi_BindVarProcId,      (Ns_Callback *) Bind},
++    {Dbi_PrepareProcId,      (Ns_Callback *) Prepare},
++    {Dbi_PrepareCloseProcId, (Ns_Callback *) PrepareClose},
++    {Dbi_ExecProcId,         (Ns_Callback *) Exec},
++    {Dbi_NextRowProcId,      (Ns_Callback *) NextRow},
++    {Dbi_ColumnLengthProcId, (Ns_Callback *) ColumnLength},
++    {Dbi_ColumnValueProcId,  (Ns_Callback *) ColumnValue},
++    {Dbi_ColumnNameProcId,   (Ns_Callback *) ColumnName},
++    {Dbi_TransactionProcId,  (Ns_Callback *) Transaction},
++    {Dbi_FlushProcId,        (Ns_Callback *) Flush},
++    {Dbi_ResetProcId,        (Ns_Callback *) Reset},
+     {0, NULL}
+ };
+ 
+@@ -461,7 +461,7 @@
+             for (i = 0; i < *numColsPtr; i++) {
+ 
+                 if ((field = mysql_fetch_field_direct(meta, i)) == NULL) {
+-                    MyException(handle, myStmt->st);
++                    MyException(handle, st);
+                     (void) mysql_stmt_close(st);
+                     mysql_free_result(meta);
+                     return NS_ERROR;
